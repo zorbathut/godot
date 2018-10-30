@@ -106,6 +106,8 @@ class GDMonoClass {
 	void fetch_parent_class();
 	void fetch_native_base();
 
+	void fetch_attributes();
+
 public:
 	static String get_full_name(MonoClass *p_mono_class);
 	static MonoType *get_mono_type(MonoClass *p_mono_class);
@@ -134,7 +136,6 @@ public:
 	bool has_attribute(GDMonoClass *p_attr_class);
 	MonoObject *get_attribute(GDMonoClass *p_attr_class);
 
-	void fetch_attributes();
 	void fetch_methods_with_godot_api_checks();
 
 	GDMonoMethod *get_method(const StringName &p_name, int p_params_count = 0);
