@@ -66,15 +66,57 @@ bool GDMonoClass::is_assignable_from(GDMonoClass *p_from) const {
 
 GDMonoClass *GDMonoClass::get_parent_class() {
 
-	if (assembly) {
-		MonoClass *parent_mono_class = mono_class_get_parent(mono_class);
+	if (!parent_class_fetched)
+		fetch_parent_class();
 
-		if (parent_mono_class) {
-			return GDMono::get_singleton()->get_class(parent_mono_class);
+	return parent_class;
+}
+
+void GDMonoClass::fetch_parent_class() {
+
+	// init to null, just in case we don't get a result in our upcoming tests
+	parent_class = NULL;
+
+	if (assembly) {
+		if (MonoClass *parent_mono_class = mono_class_get_parent(mono_class)) {
+			parent_class = GDMono::get_singleton()->get_class(parent_mono_class);
 		}
 	}
 
-	return NULL;
+	parent_class_fetched = true;
+}
+
+GDMonoClass *GDMonoClass::get_native_base() {
+
+	if (!native_base_fetched)
+		fetch_native_base();
+
+	return native_base;
+}
+
+void GDMonoClass::fetch_native_base() {
+
+	// init to null, just in case we don't get a result in our upcoming tests
+	native_base = NULL;
+
+	GDMonoClass *klass = this;
+
+	do {
+		const GDMonoAssembly *assembly = klass->get_assembly();
+		if (assembly == GDMono::get_singleton()->get_core_api_assembly()) {
+			native_base = klass;
+			break;
+		}
+
+#ifdef TOOLS_ENABLED
+		if (assembly == GDMono::get_singleton()->get_editor_api_assembly()) {
+			native_base = klass;
+			break;
+		}
+#endif
+	} while ((klass = klass->get_parent_class()) != NULL);
+
+	native_base_fetched = true;
 }
 
 #ifdef TOOLS_ENABLED
@@ -455,6 +497,12 @@ GDMonoClass::GDMonoClass(const StringName &p_namespace, const StringName &p_name
 	class_name = p_name;
 	mono_class = p_class;
 	assembly = p_assembly;
+
+	parent_class_fetched = false;
+	parent_class = NULL;
+
+	native_base_fetched = false;
+	native_base = NULL;
 
 	attrs_fetched = false;
 	attributes = NULL;
