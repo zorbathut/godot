@@ -2149,7 +2149,7 @@ Ref<CSharpScript> CSharpScript::create_for_managed_type(GDMonoClass *p_class) {
 
 	script->name = p_class->get_name();
 	script->script_class = p_class;
-	script->native = GDMonoUtils::get_class_native_base(script->script_class);
+	script->native = script->script_class->get_native_base();
 
 	CRASH_COND(script->native == NULL);
 
@@ -2166,7 +2166,7 @@ Ref<CSharpScript> CSharpScript::create_for_managed_type(GDMonoClass *p_class) {
 	if (script->script_class != script->native) {
 		GDMonoClass *native_top = script->native;
 		while (native_top) {
-			native_top->fetch_methods_with_godot_api_checks(script->native);
+			native_top->fetch_methods_with_godot_api_checks();
 
 			if (native_top == CACHED_CLASS(GodotObject))
 				break;
@@ -2176,12 +2176,12 @@ Ref<CSharpScript> CSharpScript::create_for_managed_type(GDMonoClass *p_class) {
 	}
 #endif
 
-	script->script_class->fetch_methods_with_godot_api_checks(script->native);
+	script->script_class->fetch_methods_with_godot_api_checks();
 
 	// Need to fetch method from base classes as well
 	GDMonoClass *top = script->script_class;
 	while (top && top != script->native) {
-		top->fetch_methods_with_godot_api_checks(script->native);
+		top->fetch_methods_with_godot_api_checks();
 		top = top->get_parent_class();
 	}
 
@@ -2429,7 +2429,7 @@ Error CSharpScript::reload(bool p_keep_state) {
 
 			tool = script_class->has_attribute(CACHED_CLASS(ToolAttribute));
 
-			native = GDMonoUtils::get_class_native_base(script_class);
+			native = script_class->get_native_base();
 
 			CRASH_COND(native == NULL);
 
@@ -2446,7 +2446,7 @@ Error CSharpScript::reload(bool p_keep_state) {
 			if (script_class != native) {
 				GDMonoClass *native_top = native;
 				while (native_top) {
-					native_top->fetch_methods_with_godot_api_checks(native);
+					native_top->fetch_methods_with_godot_api_checks();
 
 					if (native_top == CACHED_CLASS(GodotObject))
 						break;
@@ -2456,12 +2456,12 @@ Error CSharpScript::reload(bool p_keep_state) {
 			}
 #endif
 
-			script_class->fetch_methods_with_godot_api_checks(native);
+			script_class->fetch_methods_with_godot_api_checks();
 
 			// Need to fetch method from base classes as well
 			GDMonoClass *top = script_class;
 			while (top && top != native) {
-				top->fetch_methods_with_godot_api_checks(native);
+				top->fetch_methods_with_godot_api_checks();
 				top = top->get_parent_class();
 			}
 
