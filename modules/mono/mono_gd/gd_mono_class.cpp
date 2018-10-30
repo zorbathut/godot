@@ -181,7 +181,7 @@ void GDMonoClass::fetch_attributes() {
 	attrs_fetched = true;
 }
 
-void GDMonoClass::fetch_methods_with_godot_api_checks(GDMonoClass *p_native_base) {
+void GDMonoClass::fetch_methods_with_godot_api_checks() {
 
 	CRASH_COND(!CACHED_CLASS(GodotObject)->is_assignable_from(this));
 
@@ -210,24 +210,25 @@ void GDMonoClass::fetch_methods_with_godot_api_checks(GDMonoClass *p_native_base
 		// For debug builds, we also fetched from native base classes as well before if this is not a native base class.
 		// This allows us to warn the user here if he is using snake_case by mistake.
 
-		if (p_native_base != this) {
+		{
+			GDMonoClass *native_top = get_native_base();
+			if (native_top != this) {
+				while (native_top) {
+					GDMonoMethod *m = native_top->get_method(name, method->get_parameters_count());
 
-			GDMonoClass *native_top = p_native_base;
-			while (native_top) {
-				GDMonoMethod *m = native_top->get_method(name, method->get_parameters_count());
+					if (m && m->get_name() != name) {
+						// found
+						String fullname = m->get_ret_type_full_name() + " " + name + "(" + m->get_signature_desc(true) + ")";
+						WARN_PRINTS("Method `" + fullname + "` should be `" + m->get_full_name_no_class() +
+									"`. In class `" + namespace_name + "." + class_name + "`.");
+						break;
+					}
 
-				if (m && m->get_name() != name) {
-					// found
-					String fullname = m->get_ret_type_full_name() + " " + name + "(" + m->get_signature_desc(true) + ")";
-					WARN_PRINTS("Method `" + fullname + "` should be `" + m->get_full_name_no_class() +
-								"`. In class `" + namespace_name + "." + class_name + "`.");
-					break;
+					if (native_top == CACHED_CLASS(GodotObject))
+						break;
+
+					native_top = native_top->get_parent_class();
 				}
-
-				if (native_top == CACHED_CLASS(GodotObject))
-					break;
-
-				native_top = native_top->get_parent_class();
 			}
 		}
 #endif
@@ -239,7 +240,7 @@ void GDMonoClass::fetch_methods_with_godot_api_checks(GDMonoClass *p_native_base
 
 		// Virtual method of Godot Object derived type, let's try to find GodotMethod attribute
 
-		GDMonoClass *top = p_native_base;
+		GDMonoClass *top = get_native_base();
 
 		while (top) {
 			GDMonoMethod *base_method = top->get_method(name, method->get_parameters_count());
