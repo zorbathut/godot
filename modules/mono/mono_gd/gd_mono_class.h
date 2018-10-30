@@ -76,6 +76,12 @@ class GDMonoClass {
 	MonoClass *mono_class;
 	GDMonoAssembly *assembly;
 
+	bool parent_class_fetched;
+	GDMonoClass *parent_class;
+
+	bool native_base_fetched;
+	GDMonoClass *native_base;
+
 	bool attrs_fetched;
 	MonoCustomAttrInfo *attributes;
 
@@ -97,6 +103,9 @@ class GDMonoClass {
 	friend class GDMonoAssembly;
 	GDMonoClass(const StringName &p_namespace, const StringName &p_name, MonoClass *p_class, GDMonoAssembly *p_assembly);
 
+	void fetch_parent_class();
+	void fetch_native_base();
+
 public:
 	static String get_full_name(MonoClass *p_mono_class);
 	static MonoType *get_mono_type(MonoClass *p_mono_class);
@@ -113,6 +122,7 @@ public:
 	_FORCE_INLINE_ const GDMonoAssembly *get_assembly() const { return assembly; }
 
 	GDMonoClass *get_parent_class();
+	GDMonoClass *get_native_base();
 
 #ifdef TOOLS_ENABLED
 	Vector<MonoClassField *> get_enum_fields();
