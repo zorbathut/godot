@@ -2293,9 +2293,9 @@ bool CSharpScript::can_instance() const {
 
 		if (get_path().find("::") == -1) { // Ignore if built-in script. Can happen if the file is deleted...
 			if (_create_project_solution_if_needed()) {
-				CSharpProject::add_item(GodotSharpDirs::get_project_csproj_path(),
+				/*CSharpProject::add_item(GodotSharpDirs::get_project_csproj_path(),
 						"Compile",
-						ProjectSettings::get_singleton()->globalize_path(get_path()));
+						ProjectSettings::get_singleton()->globalize_path(get_path()));*/
 			} else {
 				ERR_PRINTS("Cannot add " + get_path() + " to the C# project because it could not be created.");
 			}
