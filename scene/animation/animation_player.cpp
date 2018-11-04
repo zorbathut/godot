@@ -545,14 +545,12 @@ void AnimationPlayer::_animation_process_animation(AnimationData *p_anim, float 
 #endif
 
 					if (can_call) {
-						MessageQueue::get_singleton()->push_call(
-								nc->node,
-								method,
-								s >= 1 ? params[0] : Variant(),
-								s >= 2 ? params[1] : Variant(),
-								s >= 3 ? params[2] : Variant(),
-								s >= 4 ? params[3] : Variant(),
-								s >= 5 ? params[4] : Variant());
+						nc->node->call(method, 
+							s >= 1 ? params[0] : Variant(),
+							s >= 2 ? params[1] : Variant(),
+							s >= 3 ? params[2] : Variant(),
+							s >= 4 ? params[3] : Variant(),
+							s >= 5 ? params[4] : Variant());
 					}
 				}
 
