@@ -1,0 +1,50 @@
+#!/bin/bash
+set -e
+
+declare -x CommandPromptType="Native"
+declare -x DevEnvDir="C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\Common7\\IDE\\"
+declare -x ExtensionSdkDir="C:\\Program Files (x86)\\Microsoft SDKs\\Windows Kits\\10\\ExtensionSDKs"
+declare -x Framework40Version="v4.0"
+declare -x FrameworkDir="C:\\Windows\\Microsoft.NET\\Framework64\\"
+declare -x FrameworkDIR64="C:\\Windows\\Microsoft.NET\\Framework64"
+declare -x FrameworkVersion="v4.0.30319"
+declare -x FrameworkVersion64="v4.0.30319"
+declare -x INCLUDE="C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Tools\\MSVC\\14.15.26726\\include;C:\\Program Files (x86)\\Windows Kits\\NETFXSDK\\4.6.1\\include\\um;C:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.16299.0\\ucrt;C:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.16299.0\\shared;C:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.16299.0\\um;C:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.16299.0\\winrt;C:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.16299.0\\cppwinrt"
+declare -x LIB="C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Tools\\MSVC\\14.15.26726\\lib\\x64;C:\\Program Files (x86)\\Windows Kits\\NETFXSDK\\4.6.1\\lib\\um\\x64;C:\\Program Files (x86)\\Windows Kits\\10\\lib\\10.0.16299.0\\ucrt\\x64;C:\\Program Files (x86)\\Windows Kits\\10\\lib\\10.0.16299.0\\um\\x64;"
+declare -x LIBPATH="C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Tools\\MSVC\\14.15.26726\\lib\\x64;C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Tools\\MSVC\\14.15.26726\\lib\\x86\\store\\references;C:\\Program Files (x86)\\Windows Kits\\10\\UnionMetadata\\10.0.16299.0;C:\\Program Files (x86)\\Windows Kits\\10\\References\\10.0.16299.0;C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319;"
+declare -x NETFXSDKDir="C:\\Program Files (x86)\\Windows Kits\\NETFXSDK\\4.6.1\\"
+declare -x __VSCMD_PREINIT_PATH="$PATH"
+declare -x PATH="C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Tools\\MSVC\\14.15.26726\\bin\\HostX64\\x64;C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\Common7\\IDE\\VC\\VCPackages;C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\TestWindow;C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\TeamFoundation\\Team Explorer;C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\MSBuild\\15.0\\bin\\Roslyn;C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\Team Tools\\Performance Tools\\x64;C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\Team Tools\\Performance Tools;C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\Common\\VSPerfCollectionTools\\\\x64;C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\Common\\VSPerfCollectionTools\\;C:\\Program Files (x86)\\Microsoft SDKs\\Windows\\v10.0A\\bin\\NETFX 4.6.1 Tools\\x64\\;C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.16299.0\\x64;C:\\Program Files (x86)\\Windows Kits\\10\\bin\\x64;C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\\\MSBuild\\15.0\\bin;C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319;C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\Common7\\IDE\\;C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\Common7\\Tools\\;$PATH"
+declare -x Platform="x64"
+declare -x UCRTVersion="10.0.16299.0"
+declare -x UniversalCRTSdkDir="C:\\Program Files (x86)\\Windows Kits\\10\\"
+declare -x VCIDEInstallDir="C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\Common7\\IDE\\VC\\"
+declare -x VCINSTALLDIR="C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\"
+declare -x VCToolsInstallDir="C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Tools\\MSVC\\14.15.26726\\"
+declare -x VCToolsRedistDir="C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Redist\\MSVC\\14.15.26706\\"
+declare -x VCToolsVersion="14.15.26726"
+declare -x VisualStudioVersion="15.0"
+declare -x VS150COMNTOOLS="C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\Common7\\Tools\\"
+declare -x VSCMD_ARG_app_plat="Desktop"
+declare -x VSCMD_ARG_HOST_ARCH="x64"
+declare -x VSCMD_ARG_TGT_ARCH="x64"
+declare -x VSCMD_VER="15.8.2"
+declare -x VSINSTALLDIR="C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\"
+declare -x WindowsLibPath="C:\\Program Files (x86)\\Windows Kits\\10\\UnionMetadata\\10.0.16299.0;C:\\Program Files (x86)\\Windows Kits\\10\\References\\10.0.16299.0"
+declare -x WindowsSdkBinPath="C:\\Program Files (x86)\\Windows Kits\\10\\bin\\"
+declare -x WindowsSdkDir="C:\\Program Files (x86)\\Windows Kits\\10\\"
+declare -x WindowsSDKLibVersion="10.0.16299.0\\"
+declare -x WindowsSdkVerBinPath="C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.16299.0\\"
+declare -x WindowsSDKVersion="10.0.16299.0\\"
+declare -x WindowsSDK_ExecutablePath_x64="C:\\Program Files (x86)\\Microsoft SDKs\\Windows\\v10.0A\\bin\\NETFX 4.6.1 Tools\\x64\\"
+declare -x WindowsSDK_ExecutablePath_x86="C:\\Program Files (x86)\\Microsoft SDKs\\Windows\\v10.0A\\bin\\NETFX 4.6.1 Tools\\"
+declare -x __DOTNET_ADD_64BIT="1"
+declare -x __DOTNET_PREFERRED_BITNESS="64"
+
+cmd /C "scons p=windows tools=yes module_mono_enabled=yes mono_glue=no -j12"
+
+./bin/godot.windows.tools.64.mono.exe --generate-mono-glue modules/mono/glue
+
+cmd /C "call scons p=windows module_mono_enabled=yes -j12"
+
+./bin/godot.windows.tools.64.mono.exe c:/werk/shadebinder/project.godot
