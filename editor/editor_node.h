@@ -124,6 +124,7 @@ private:
 		FILE_SAVE_SCENE,
 		FILE_SAVE_AS_SCENE,
 		FILE_SAVE_ALL_SCENES,
+		FILE_RESAVE_ALL_SCENES,
 		FILE_SAVE_BEFORE_RUN,
 		FILE_SAVE_AND_RUN,
 		FILE_SHOW_IN_FILESYSTEM,
@@ -449,6 +450,9 @@ private:
 	void _save_all_scenes();
 	int _next_unsaved_scene(bool p_valid_filename, int p_start = 0);
 	void _discard_changes(const String &p_str = String());
+
+	void _resave_all_scenes();
+	void _resave_all_scenes_in(const String &path);
 
 	void _instance_request(const Vector<String> &p_files);
 

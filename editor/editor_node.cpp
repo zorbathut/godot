@@ -1978,6 +1978,12 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 
 			_save_all_scenes();
 		} break;
+
+		case FILE_RESAVE_ALL_SCENES: {
+
+			_resave_all_scenes();
+		} break;
+
 		case FILE_SAVE_BEFORE_RUN: {
 			if (!p_confirmed) {
 				confirmation->get_cancel()->set_text(TTR("No"));
@@ -2511,6 +2517,54 @@ void EditorNode::_discard_changes(const String &p_str) {
 			ERR_FAIL_COND(err);
 		} break;
 	}
+}
+
+void EditorNode::_resave_all_scenes() {
+
+	_resave_all_scenes_in("res://");
+}
+
+void EditorNode::_resave_all_scenes_in(const String &path) {
+
+	print_line(path);
+
+	DirAccess *da = DirAccess::create(DirAccess::ACCESS_RESOURCES);
+
+	da->change_dir(path);
+	da->list_dir_begin();
+	while (true) {
+
+		bool isdir;
+		String f = da->get_next(&isdir);
+		if (f == "")
+			break;
+		
+		String full = path + f;
+
+		if (isdir) {
+
+			if (f.begins_with(".")) //ignore hidden and . / ..
+				continue;
+
+			_resave_all_scenes_in(full + "/");
+
+		} else {
+			
+			if (f.ends_with(".tscn")) {
+				print_line("Processing " + full);
+
+				int tabcount = editor_data.get_edited_scene_count();
+				load_scene(full);
+				save_scene_to_path(full);
+				if (editor_data.get_edited_scene_count() > tabcount) {
+					_scene_tab_closed(editor_data.get_edited_scene_count() - 1);
+				}
+			}
+		}
+	}
+
+	da->list_dir_end();
+	memdelete(da);
 }
 
 void EditorNode::_update_debug_options() {
@@ -5419,6 +5473,8 @@ EditorNode::EditorNode() {
 	p->add_shortcut(ED_SHORTCUT("editor/save_scene", TTR("Save Scene"), KEY_MASK_CMD + KEY_S), FILE_SAVE_SCENE);
 	p->add_shortcut(ED_SHORTCUT("editor/save_scene_as", TTR("Save Scene As..."), KEY_MASK_SHIFT + KEY_MASK_CMD + KEY_S), FILE_SAVE_AS_SCENE);
 	p->add_shortcut(ED_SHORTCUT("editor/save_all_scenes", TTR("Save All Scenes"), KEY_MASK_ALT + KEY_MASK_SHIFT + KEY_MASK_CMD + KEY_S), FILE_SAVE_ALL_SCENES);
+	p->add_separator();
+	p->add_shortcut(ED_SHORTCUT("editor/resave_all_scenes", TTR("Resave All Scenes")), FILE_RESAVE_ALL_SCENES);
 	p->add_separator();
 	p->add_shortcut(ED_SHORTCUT("editor/close_scene", TTR("Close Scene"), KEY_MASK_SHIFT + KEY_MASK_CMD + KEY_W), FILE_CLOSE);
 	p->add_separator();
