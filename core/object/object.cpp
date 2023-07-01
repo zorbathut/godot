@@ -306,6 +306,8 @@ void Object::set(const StringName &p_name, const Variant &p_value, bool *r_valid
 
 	if (r_valid) {
 		*r_valid = false;
+	} else {
+		WARN_PRINT("Failed to set property " + get_class_name() + "::" + p_name);
 	}
 }
 
@@ -389,6 +391,8 @@ Variant Object::get(const StringName &p_name, bool *r_valid) const {
 
 		if (r_valid) {
 			*r_valid = false;
+		} else {
+			WARN_PRINT("Failed to get property " + get_class_name() + "::" + p_name);
 		}
 		return Variant();
 	}
