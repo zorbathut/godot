@@ -326,7 +326,7 @@ void UserLogManagerLogger::log_error(const char *p_function, const char *p_file,
 	process(std::move(message));
 }
 
-void UserLogManagerLogger::process(const Dictionary &&p_message) {
+void UserLogManagerLogger::process(const Dictionary &p_message) {
 	{
 		// Shove another item into the buffer, if we can.
 		MutexLock lock(buffer_mutex);
@@ -350,7 +350,7 @@ void UserLogManagerLogger::process(const Dictionary &&p_message) {
 		return;
 	}
 
-	logManager->process(std::move(p_message));
+	logManager->process(p_message);
 }
 
 void UserLogManagerLogger::flush() {

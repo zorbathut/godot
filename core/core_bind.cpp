@@ -1925,7 +1925,7 @@ void LogManager::register_log_capture(const Callable &p_callable) {
 	}
 }
 
-void LogManager::process(const Dictionary &&p_message) {
+void LogManager::process(const Dictionary &p_message) {
 	Variant message_variant = p_message;
 	const Variant *args[1] = { &message_variant };
 	Variant retval;

@@ -128,7 +128,7 @@ public:
 
 private:
 	friend class core_bind::LogManager;
-	void process(const Dictionary &&p_message);
+	void process(const Dictionary &p_message);
 	void flush();
 };
 

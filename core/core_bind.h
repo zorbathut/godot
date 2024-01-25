@@ -586,7 +586,7 @@ public:
 
 private:
 	friend class ::UserLogManagerLogger;
-	void process(const Dictionary &&p_message);
+	void process(const Dictionary &p_message);
 };
 
 } // namespace core_bind
