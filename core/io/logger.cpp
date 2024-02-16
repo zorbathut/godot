@@ -268,21 +268,42 @@ CompositeLogger::~CompositeLogger() {
 	}
 }
 
+////// UserLogManagerLogger //////
+// This is the internal user log hooking system, which does all the hard work/
+
 UserLogManagerLogger *UserLogManagerLogger::singleton = nullptr;
+const int UserLogManagerLoggerFramesToBuffer = 0;
 
 UserLogManagerLogger::UserLogManagerLogger() {
 	ERR_FAIL_COND_MSG(singleton != nullptr, "Somehow created two UserLogManagerLoggers");
 
 	singleton = this;
+
+	// this is about to get overwritten by `recalculate_state`
+	state = STATE_OFF;
+
+	// we don't technically have to lock the mutex here but I'd rather preserve the formal recalculate_state mutex invariant
+	MutexLock lock(mutex);
+	recalculate_state();
 }
 
 UserLogManagerLogger::~UserLogManagerLogger() {
 	ERR_FAIL_COND_MSG(singleton != this, "UserLogManagerLogger::singleton not correct on exit");
 
 	singleton = nullptr;
+
+	// there's no messages in-flight, right?
+	// right?
 }
 
 void UserLogManagerLogger::logv(const char *p_format, va_list p_list, bool p_err) {
+	if (state == STATE_OFF) {
+		// don't jump through the formatting hoops, just drop the message
+		// if there's a hook active (or we're in the buffering zone), this will never transition through this state
+		// if at any point there isn't a hook active, dropping messages is valid
+		return;
+	}
+
 	va_list list_copy;
 	va_copy(list_copy, p_list);
 
@@ -296,12 +317,19 @@ void UserLogManagerLogger::logv(const char *p_format, va_list p_list, bool p_err
 	message["text"] = buf;
 	message["type"] = "info";
 
-	process(std::move(message));
+	process(message);
 
 	Memory::free_static(buf);
 }
 
 void UserLogManagerLogger::log_error(const char *p_function, const char *p_file, int p_line, const char *p_code, const char *p_rationale, bool p_editor_notify, ErrorType p_type) {
+	if (state == STATE_OFF) {
+		// don't jump through the formatting hoops, just drop the message
+		// if there's a hook active (or we're in the buffering zone), this will never transition through this state
+		// if at any point there isn't a hook active, dropping messages is valid
+		return;
+	}
+
 	Dictionary message;
 	message["function"] = p_function;
 	message["file"] = p_file;
@@ -323,58 +351,257 @@ void UserLogManagerLogger::log_error(const char *p_function, const char *p_file,
 			break;
 	}
 
-	process(std::move(message));
+	process(message);
 }
 
-void UserLogManagerLogger::process(const Dictionary &p_message) {
-	{
-		// Shove another item into the buffer, if we can.
-		MutexLock lock(buffer_mutex);
-		if (buffering_active) {
-			// We are storing messages (or possibly in the middle of replaying them), so store another one
-			// This is fine if we're replaying; we're intentionally using an index, not an iterator
+void UserLogManagerLogger::register_log_capture_unthreadsafe(const Callable &p_callable) {
+	// It gets *extremely* hard to guarantee the proper semantics if you're allowed to call this from other threads.
+	ERR_FAIL_COND_MSG(!::Thread::is_main_thread(), "This call is forbidden outside the main thread.");
 
-			if (::Engine::get_singleton()->get_frames_drawn() > 1) {
-				// Give up; if we're buffering then we haven't been hooked yet, and if we've rendered a frame we probably aren't going to be, stop wasting RAM. Just throw everything away.
-				buffered_logs.clear();
-				buffering_active = false;
-			} else {
-				buffered_logs.append(p_message);
+	if (get_frames_drawn_safe() == UserLogManagerLoggerFramesToBuffer)
+	{
+		// Time to dispatch our messages! This catches this particular hook up to "realtime".
+		int indexToSend = 0;
+
+		while (true)
+		{
+			Dictionary toSend;
+			{
+				// Lock the mutex to ensure nobody's messing with the buffer
+				// We can be certain nobody is *removing* things from the buffer right now, because we're on frame 0
+				// the buffer is guaranteed to exist during frame 0
+				// the frame 0-1 transition is locked to the main thread, and so are we!
+				// adding things to the buffer is fine, we'll just loop until they're done
+				MutexLock lock(mutex);
+
+				if (indexToSend >= buffered_logs.size())
+				{
+					// We've reached the end of the log, and because it's locked,
+					// we can be sure that no new messages will be added at this exact moment
+					// Add ourselves to the captures so we'll intercept future messages.
+					register_callable(captures_unthreadsafe, p_callable);
+
+					// conceptually we should do whatever cleanup is necessary to tweak our state
+					// practically, we know we're on frame 0 so this must keep being buffered
+					// so we don't need to do anything here
+					//recalculate_state();
+
+					// We're done!
+					break;
+				}
+
+				// We haven't reached the end; grab another message
+				toSend = buffered_logs[indexToSend++];
+
+				// Unlock the mutex to avoid deadlocks in case our dispatch adds/removes callbacks or logs messages
 			}
-			return;
+
+			// Off you go!
+			dispatch_message(toSend, p_callable);
 		}
 	}
-
-	core_bind::LogManager *logManager = core_bind::LogManager::get_singleton();
-	if (!logManager) {
-		return;
+	else
+	{
+		// it's not Frame 0, therefore we don't have to mess around with the buffer
+		MutexLock lock(mutex);
+		register_callable(captures_unthreadsafe, p_callable);	
+		recalculate_state();
 	}
+}
+void UserLogManagerLogger::unregister_log_capture_unthreadsafe(const Callable &p_callable) {
+	// It gets *extremely* hard to guarantee the proper semantics if you're allowed to call this from other threads.
+	ERR_FAIL_COND_MSG(!::Thread::is_main_thread(), "This call is forbidden outside the main thread.");
 
-	logManager->process(p_message);
+	MutexLock lock(mutex);
+	unregister_callable(captures_unthreadsafe, p_callable);	
+	recalculate_state();
+}
+void UserLogManagerLogger::register_log_capture_buffered(const Callable &p_callable) {
+	// It gets *extremely* hard to guarantee the proper semantics if you're allowed to call this from other threads.
+	ERR_FAIL_COND_MSG(!::Thread::is_main_thread(), "This call is forbidden outside the main thread.");
+
+	MutexLock lock(mutex);
+	register_callable(captures_buffered, p_callable);	
+	recalculate_state();
+}
+void UserLogManagerLogger::unregister_log_capture_buffered(const Callable &p_callable) {
+	// It gets *extremely* hard to guarantee the proper semantics if you're allowed to call this from other threads.
+	ERR_FAIL_COND_MSG(!::Thread::is_main_thread(), "This call is forbidden outside the main thread.");
+
+	MutexLock lock(mutex);
+	unregister_callable(captures_buffered, p_callable);	
+	recalculate_state();
 }
 
 void UserLogManagerLogger::flush() {
-	core_bind::LogManager *logManager = core_bind::LogManager::get_singleton();
+	// if you're not sure why this is important, go read the giant comment near the end of recalculate_state
+	// it avoids a nearly-impossible race condition
+	ERR_FAIL_COND_MSG(!::Thread::is_main_thread(), "This call is forbidden outside the main thread.");
 
-	int index = 0;
-	while (true) {
-		Dictionary message;
-		{
-			MutexLock lock(buffer_mutex);
-			if (index >= buffered_logs.size()) {
-				// We intentionally clear this only once we're *past* the end.
-				// This guarantees that there's no window for a message in another thread
-				// to arrive before the final buffered message.
-				buffered_logs.clear();
-				buffering_active = false;
-				break;
+	if (state != STATE_BUFFERING) {
+		// nothing to do!
+		return;
+	}
+
+	// "Send all our buffered messages to all our buffered log readers"
+	// To avoid inconsistent message delivery of anything that's already been buffered, we move the entire buffer, and all our callables, first
+	Vector<Dictionary> buffered_logs_mirror;
+	{
+		MutexLock lock(mutex);
+		SWAP(buffered_logs_mirror, buffered_logs);
+	}
+
+	// Dispatch to all the buffered callables, in a threadsafe manner
+	// Any buffered callables that disable themselves stop getting messages
+	// any buffered callables that get attached might get half the messages
+	// we're ok with that, it's still a chronologically coherent block
+	for (int i = 0; i < buffered_logs_mirror.size(); ++i) {
+		int indexToSendTo = 0;
+
+		while (true) {
+			Callable callable;
+			{
+				MutexLock lock(mutex);
+				if (indexToSendTo >= captures_buffered.size()) {
+					// we done!
+					break;
+				}
+
+				callable = captures_buffered[indexToSendTo++];
 			}
 
-			message = buffered_logs[index++];
+			dispatch_message(buffered_logs_mirror[i], callable);
 		}
-
-		// Do this outside the lock, just in case it ends up spawning more messages, or (horror case) waiting on something in another thread which also wants to send a message.
-		// We do not want to deadlock ourselves.
-		logManager->process(std::move(message));
 	}
+}
+
+void UserLogManagerLogger::process(const Dictionary &p_message) {
+	Vector<Callable> captures_unthreadsafe_mirror;
+	{
+		// Shove another item into the buffer, if we need to.
+		// We also atomically grab `captures_unthreadsafe` to avoid race conditions, in the case where:
+		// * this function buffers a message
+		// * an already-running register_log_capture_unthreadsafe dispatches it from the buffer
+		// * that same register_log_capture_unthreadsafe adds itself to captures_unthreadsafe_mirror
+		// * this function reaches the captures_unthreadsafe section and sends the same message again
+		// register_log_capture_unthreadsafe intentionally finishes the buffered log message replay atomically with adding a new handler to the vector
+		// so we do the same thing here, adding a message to the log atomically with copying the handlers
+		// Vector COW behavior should prevent this from being expensive in the common case
+		MutexLock lock(mutex);
+		if (state == STATE_BUFFERING) {
+			buffered_logs.append(p_message);
+		}
+		captures_unthreadsafe_mirror = captures_unthreadsafe;
+	}
+
+	// Dispatch to all the unthreadsafe callables at the moment we added to the buffer
+	// We actually don't have to care about cutesy threadsafety for once because we have a local copy of the buffer
+	// which is the one we need to use anyway
+	// we also get to avoid locking the mutex!
+
+	for (int i = 0; i < captures_unthreadsafe_mirror.size(); ++i) {
+		dispatch_message(p_message, captures_unthreadsafe_mirror[i]);
+	}
+	
+	if (get_frames_drawn_safe() == UserLogManagerLoggerFramesToBuffer + 1) {
+		// Buffering is done!
+		// Read the comment near the bottom of recalculate_state for a possible race condition and how it's dealt with.
+		MutexLock lock(mutex);
+		recalculate_state();
+	}
+}
+
+void UserLogManagerLogger::dispatch_message(const Dictionary &p_message, const Callable &p_callable) {
+	// ideally we should verify that the mutex is *not* held by this thread, but the current API provides no way to do that
+	// (it's possible it's already been scooped up by another thread, that's fine)
+
+	if (p_callable.is_null()) {
+		// this is a deleted callable, ignore it
+		// (easier to put the check here than everywhere that calls this)
+		return;
+	}
+
+	Variant message_variant = p_message;
+	const Variant *args[1] = { &message_variant };
+	Variant retval;
+	Callable::CallError err;
+	p_callable.callp(args, 1, retval, err);
+}
+
+void UserLogManagerLogger::recalculate_state() {
+	// we should verify that the mutex is held (ideally by this thread) but the current API provides no way to do that
+	// (aside from switching to a non-recursive mutex and trying to lock it and hoping it fails, which, no)
+
+	State newState = STATE_OFF;
+
+	if (get_frames_drawn_safe() == 0) {
+		// We always buffer on the first frame, in case someone hooks to us and expects a replay
+		newState = STATE_BUFFERING;
+	} else if (!captures_buffered.is_empty()) {
+		// Anything buffering means we need to preserve the buffer
+		newState = STATE_BUFFERING;
+	} else if (!captures_unthreadsafe.is_empty()) {
+		// Otherwise, processing is still necessary
+		newState = STATE_PASSTHROUGH;
+	}
+
+	// if we're transitioning from buffering to anything else, we need to clear the buffer
+	if (state == STATE_BUFFERING && newState != STATE_BUFFERING) {
+		// NOTE: this line is why the register/unregister functions are locked to the main thread
+		// imagine this set of events:
+		// * we're on frame 0
+		// * we register a nonthreadsafe handler in a separate thread
+		// * the nonthreadsafe handler starts replaying the buffer
+		// * on the main thread, we transition to frame 1
+		// * something (maybe a register/unregister, maybe the normal flush()) ends up calling this function
+		// * we decide to clear the buffer between locks as it's being replayed
+		// * this doesn't crash, but it does mean we prematurely end the replay
+		// * and *then* the nonthreadsafe handler gets hooked properly and starts echoing messages
+		// * end result, a bunch of "guaranteed to be replayed" messages vanish into the ether
+		// I don't like cases that end up with a batch of log messages mysteriously vanishing!
+		// nonthreadsafe replays happen only on frame 0
+		// so this can be fixed by just ensuring that the frame0-frame1 transition must happen on the same thread as all nonthreadsafe buffer replays
+		// thus ensuring they cannot happen in parallel
+
+		buffered_logs.clear();
+	}
+
+	state = newState;
+}
+
+void UserLogManagerLogger::register_callable(Vector<Callable> &p_vector, const Callable &p_callable)
+{
+	// we should verify that the mutex is held (ideally by this thread) but the current API provides no way to do that
+
+	// right now we're just letting people double-register if they want
+	// this should maybe be a warning but that gets hairy with register_log_capture_unthreadsafe
+	// so instead I'm just saying "you registered it twice, what did you expect would happen"
+	int index = p_vector.find(Callable());
+	if (index != -1) {
+		// reuse an empty Callable() slot if there is one
+		p_vector.write[index] = p_callable;
+	} else {
+		p_vector.append(p_callable);
+	}	
+}
+
+void UserLogManagerLogger::unregister_callable(Vector<Callable> &p_vector, const Callable &p_callable)
+{
+	// we should verify that the mutex is held (ideally by this thread) but the current API provides no way to do that
+
+	// find the index and replace it with Callable() to invalidate it without moving indices around, which would break in-flight iterators in other threads
+	// to parallel the register-twice semantics we're intentionally removing exactly one copy here
+	int index = p_vector.find(p_callable);
+	if (index != -1) {
+		p_vector.write[index] = Callable();
+	}
+}
+
+uint64_t UserLogManagerLogger::get_frames_drawn_safe() const {
+	Engine *engine = ::Engine::get_singleton();
+	if (engine == nullptr) {
+		// We start early enough that this may actually not exist.
+		return 0;
+	}
+	return engine->get_frames_drawn();
 }

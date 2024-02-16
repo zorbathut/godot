@@ -1901,6 +1901,8 @@ void EngineDebugger::_bind_methods() {
 }
 
 ////// LogManager //////
+// This is the client-facing part of the user log hooking system.
+// It's basically just a shunt that passes callbacks to the persistent UserLogManagerLogger singleton.
 
 LogManager *LogManager::singleton = nullptr;
 
@@ -1916,25 +1918,43 @@ LogManager::~LogManager() {
 	singleton = nullptr;
 }
 
-void LogManager::register_log_capture(const Callable &p_callable) {
-	log_capture = p_callable;
-
+void LogManager::register_log_capture_unthreadsafe(const Callable &p_callable) {
 	UserLogManagerLogger *log_manager = UserLogManagerLogger::get_singleton();
+	ERR_FAIL_COND_MSG(log_manager == nullptr, "log_manager not yet initialized; this shouldn't be possible");
 	if (log_manager != nullptr) {
-		log_manager->flush();
+		log_manager->register_log_capture_unthreadsafe(p_callable);
 	}
 }
 
-void LogManager::process(const Dictionary &p_message) {
-	Variant message_variant = p_message;
-	const Variant *args[1] = { &message_variant };
-	Variant retval;
-	Callable::CallError err;
-	log_capture.callp(args, 1, retval, err);
+void LogManager::unregister_log_capture_unthreadsafe(const Callable &p_callable) {
+	UserLogManagerLogger *log_manager = UserLogManagerLogger::get_singleton();
+	ERR_FAIL_COND_MSG(log_manager == nullptr, "log_manager not yet initialized; this shouldn't be possible");
+	if (log_manager != nullptr) {
+		log_manager->unregister_log_capture_unthreadsafe(p_callable);
+	}
+}
+
+void LogManager::register_log_capture_buffered(const Callable &p_callable) {
+	UserLogManagerLogger *log_manager = UserLogManagerLogger::get_singleton();
+	ERR_FAIL_COND_MSG(log_manager == nullptr, "log_manager not yet initialized; this shouldn't be possible");
+	if (log_manager != nullptr) {
+		log_manager->register_log_capture_buffered(p_callable);
+	}
+}
+
+void LogManager::unregister_log_capture_buffered(const Callable &p_callable) {
+	UserLogManagerLogger *log_manager = UserLogManagerLogger::get_singleton();
+	ERR_FAIL_COND_MSG(log_manager == nullptr, "log_manager not yet initialized; this shouldn't be possible");
+	if (log_manager != nullptr) {
+		log_manager->unregister_log_capture_buffered(p_callable);
+	}
 }
 
 void LogManager::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("register_log_capture", "callable"), &LogManager::register_log_capture);
+	ClassDB::bind_method(D_METHOD("register_log_capture_unthreadsafe", "callable"), &LogManager::register_log_capture_unthreadsafe);
+	ClassDB::bind_method(D_METHOD("unregister_log_capture_unthreadsafe", "callable"), &LogManager::unregister_log_capture_unthreadsafe);
+	ClassDB::bind_method(D_METHOD("register_log_capture_buffered", "callable"), &LogManager::register_log_capture_buffered);
+	ClassDB::bind_method(D_METHOD("unregister_log_capture_buffered", "callable"), &LogManager::unregister_log_capture_buffered);
 }
 
 } // namespace core_bind
