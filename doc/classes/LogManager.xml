@@ -9,17 +9,56 @@
 	<tutorials>
 	</tutorials>
 	<methods>
-		<method name="register_log_capture">
+		<method name="register_log_capture_buffered">
 			<return type="void" />
 			<param index="0" name="callable" type="Callable" />
 			<description>
-				TODO THIS DOCUMENTATION IS INCOMPLETE
+				Registers a Buffered callback for the log capture system.
 
-				Registers a callback for the log capture system. It will be called with a single Variant containing a dictionary containing "type" and "text" fields, and optionally including "function", "file", "line", and "rationale". Note that this callback can be called simultaneously from multiple threads, even while the Node script environment is running, so the implementation must be thread-safe.
+				Your callback will occasionally be called when log messages have been output. This is guaranteed to happen on the main thread and preserve message order; however, there may be some delay (at most, one frame) between the message being sent and the callback being called.
+
+				Your callback will be called with a single Variant containing a dictionary with fields. It is guaranteed to include:
+
+				type: The type of message. Currently "error", "warning", 'info", "script", and "shader".
+				text: The message text.
+
+				Optionally, the dictionary may contain:
+
+				file: The source file the message originated from.
+				line: The line number the message originated from.
+				function: The function the message originated from.
+				rationale: Further detailed information about the message.
 
 				If the callback is registered before the first frame, it will immediately replay all messages from the start of the game, in order.
 
-				There's currently no way to unregister the callback or register more than one callback. This should probably be fixed if it becomes part of the engine.
+				This function may be called only on the main thread.
+			</description>
+		</method>
+		<method name="register_log_capture_nonthreadsafe">
+			<return type="void" />
+			<param index="0" name="callable" type="Callable" />
+			<description>
+				Registers a Nonthreadsafe callback for the log capture system.
+
+				Your callback will be called whenever a log message is output. This may happen in any thread or in any situation. Your callback
+			</description>
+		</method>
+		<method name="unregister_log_capture_buffered">
+			<return type="void" />
+			<param index="0" name="callable" type="Callable" />
+			<description>
+				Unregisters a Buffered callback for the log capture system. Messages being sent to the callback will cease immediately.
+
+				This function may be called only on the main thread.
+			</description>
+		</method>
+		<method name="unregister_log_capture_nonthreadsafe">
+			<return type="void" />
+			<param index="0" name="callable" type="Callable" />
+			<description>
+				Unregisters a Nonthreadsafe callback for the log capture system. Your callback may continue to receive messages for a short time after this function is called.
+
+				This function may be called only on the main thread.
 			</description>
 		</method>
 	</methods>

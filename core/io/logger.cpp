@@ -354,7 +354,7 @@ void UserLogManagerLogger::log_error(const char *p_function, const char *p_file,
 	process(message);
 }
 
-void UserLogManagerLogger::register_log_capture_unthreadsafe(const Callable &p_callable) {
+void UserLogManagerLogger::register_log_capture_nonthreadsafe(const Callable &p_callable) {
 	// It gets *extremely* hard to guarantee the proper semantics if you're allowed to call this from other threads.
 	ERR_FAIL_COND_MSG(!::Thread::is_main_thread(), "This call is forbidden outside the main thread.");
 
@@ -379,7 +379,7 @@ void UserLogManagerLogger::register_log_capture_unthreadsafe(const Callable &p_c
 					// We've reached the end of the log, and because it's locked,
 					// we can be sure that no new messages will be added at this exact moment
 					// Add ourselves to the captures so we'll intercept future messages.
-					register_callable(captures_unthreadsafe, p_callable);
+					register_callable(captures_nonthreadsafe, p_callable);
 
 					// conceptually we should do whatever cleanup is necessary to tweak our state
 					// practically, we know we're on frame 0 so this must keep being buffered
@@ -404,16 +404,16 @@ void UserLogManagerLogger::register_log_capture_unthreadsafe(const Callable &p_c
 	{
 		// it's not Frame 0, therefore we don't have to mess around with the buffer
 		MutexLock lock(mutex);
-		register_callable(captures_unthreadsafe, p_callable);	
+		register_callable(captures_nonthreadsafe, p_callable);	
 		recalculate_state();
 	}
 }
-void UserLogManagerLogger::unregister_log_capture_unthreadsafe(const Callable &p_callable) {
+void UserLogManagerLogger::unregister_log_capture_nonthreadsafe(const Callable &p_callable) {
 	// It gets *extremely* hard to guarantee the proper semantics if you're allowed to call this from other threads.
 	ERR_FAIL_COND_MSG(!::Thread::is_main_thread(), "This call is forbidden outside the main thread.");
 
 	MutexLock lock(mutex);
-	unregister_callable(captures_unthreadsafe, p_callable);	
+	unregister_callable(captures_nonthreadsafe, p_callable);	
 	recalculate_state();
 }
 void UserLogManagerLogger::register_log_capture_buffered(const Callable &p_callable) {
@@ -476,31 +476,31 @@ void UserLogManagerLogger::flush() {
 }
 
 void UserLogManagerLogger::process(const Dictionary &p_message) {
-	Vector<Callable> captures_unthreadsafe_mirror;
+	Vector<Callable> captures_nonthreadsafe_mirror;
 	{
 		// Shove another item into the buffer, if we need to.
-		// We also atomically grab `captures_unthreadsafe` to avoid race conditions, in the case where:
+		// We also atomically grab `captures_nonthreadsafe` to avoid race conditions, in the case where:
 		// * this function buffers a message
-		// * an already-running register_log_capture_unthreadsafe dispatches it from the buffer
-		// * that same register_log_capture_unthreadsafe adds itself to captures_unthreadsafe_mirror
-		// * this function reaches the captures_unthreadsafe section and sends the same message again
-		// register_log_capture_unthreadsafe intentionally finishes the buffered log message replay atomically with adding a new handler to the vector
+		// * an already-running register_log_capture_nonthreadsafe dispatches it from the buffer
+		// * that same register_log_capture_nonthreadsafe adds itself to captures_nonthreadsafe_mirror
+		// * this function reaches the captures_nonthreadsafe section and sends the same message again
+		// register_log_capture_nonthreadsafe intentionally finishes the buffered log message replay atomically with adding a new handler to the vector
 		// so we do the same thing here, adding a message to the log atomically with copying the handlers
 		// Vector COW behavior should prevent this from being expensive in the common case
 		MutexLock lock(mutex);
 		if (state == STATE_BUFFERING) {
 			buffered_logs.append(p_message);
 		}
-		captures_unthreadsafe_mirror = captures_unthreadsafe;
+		captures_nonthreadsafe_mirror = captures_nonthreadsafe;
 	}
 
-	// Dispatch to all the unthreadsafe callables at the moment we added to the buffer
+	// Dispatch to all the nonthreadsafe callables at the moment we added to the buffer
 	// We actually don't have to care about cutesy threadsafety for once because we have a local copy of the buffer
 	// which is the one we need to use anyway
 	// we also get to avoid locking the mutex!
 
-	for (int i = 0; i < captures_unthreadsafe_mirror.size(); ++i) {
-		dispatch_message(p_message, captures_unthreadsafe_mirror[i]);
+	for (int i = 0; i < captures_nonthreadsafe_mirror.size(); ++i) {
+		dispatch_message(p_message, captures_nonthreadsafe_mirror[i]);
 	}
 	
 	if (get_frames_drawn_safe() == UserLogManagerLoggerFramesToBuffer + 1) {
@@ -540,7 +540,7 @@ void UserLogManagerLogger::recalculate_state() {
 	} else if (!captures_buffered.is_empty()) {
 		// Anything buffering means we need to preserve the buffer
 		newState = STATE_BUFFERING;
-	} else if (!captures_unthreadsafe.is_empty()) {
+	} else if (!captures_nonthreadsafe.is_empty()) {
 		// Otherwise, processing is still necessary
 		newState = STATE_PASSTHROUGH;
 	}
@@ -574,7 +574,7 @@ void UserLogManagerLogger::register_callable(Vector<Callable> &p_vector, const C
 	// we should verify that the mutex is held (ideally by this thread) but the current API provides no way to do that
 
 	// right now we're just letting people double-register if they want
-	// this should maybe be a warning but that gets hairy with register_log_capture_unthreadsafe
+	// this should maybe be a warning but that gets hairy with register_log_capture_nonthreadsafe
 	// so instead I'm just saying "you registered it twice, what did you expect would happen"
 	int index = p_vector.find(Callable());
 	if (index != -1) {
