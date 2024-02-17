@@ -366,7 +366,7 @@ void UserLogManagerLogger::register_log_capture_nonthreadsafe(const Callable &p_
 
 	if (get_frames_drawn_safe() <= UserLogManagerLoggerFramesToSpeculativelyBuffer) {
 		// Time to dispatch our messages! This catches this particular hook up to "realtime", replaying all buffered messages in fast-forward.
-		
+
 		// We can be certain nobody is *removing* things from the buffer right now
 		// Nothing is ever removed from the buffer except for frame transitions and state changes
 		// Frame transitions are locked to the main thread, and so are we
@@ -374,7 +374,7 @@ void UserLogManagerLogger::register_log_capture_nonthreadsafe(const Callable &p_
 
 		// Adding things to the buffer is fine, we'll just loop until they're done; this is why we're not using an iterator but rather an index
 		int indexToSend = 0;
-		
+
 		while (true) {
 			Dictionary toSend;
 			{
