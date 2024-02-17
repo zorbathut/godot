@@ -114,16 +114,16 @@ class UserLogManagerLogger : public Logger {
 	static UserLogManagerLogger *singleton;
 
 	Vector<Dictionary> buffered_logs;
-	
+
 	// Stored as Vector so we can iterate over it in a threadsafe manner without holding a lock
 	// Deleted items are replaced by Callable(), with the slot later reused, to avoid problems with in-flight iterators
 	Vector<Callable> captures_nonthreadsafe;
 	Vector<Callable> captures_buffered;
 
 	enum State {
-		STATE_OFF,	// log messages are not processed in any way
-		STATE_PASSTHROUGH,	// log messages are processed but sent straight to nonthreadsafe
-		STATE_BUFFERING,	// log messages are processed and buffered until the next flush (and maybe sent straight to nonthreadsafe also)
+		STATE_OFF, // log messages are not processed in any way
+		STATE_PASSTHROUGH, // log messages are processed but sent straight to nonthreadsafe
+		STATE_BUFFERING, // log messages are processed and buffered until the next flush (and maybe sent straight to nonthreadsafe also)
 	};
 	std::atomic<State> state;
 
