@@ -117,6 +117,7 @@ class UserLogManagerLogger : public Logger {
 
 	// Stored as Vector so we can iterate over it in a threadsafe manner without holding a lock
 	// Deleted items are replaced by Callable(), with the slot later reused, to avoid problems with in-flight iterators
+	// This technically means adding and removing a capture is O(n^2) but it's hard to imagine any sensible scenario where n>4
 	Vector<Callable> captures_nonthreadsafe;
 	Vector<Callable> captures_buffered;
 
