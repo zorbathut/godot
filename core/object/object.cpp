@@ -118,6 +118,8 @@ TypedArray<Dictionary> convert_property_list(const List<PropertyInfo> *p_list) {
 MethodInfo::operator Dictionary() const {
 	Dictionary d;
 	d["name"] = name;
+	d["is_static"] = is_static;
+	d["hash"] = hash;
 	d["args"] = convert_property_list(&arguments);
 	Array da;
 	for (int i = 0; i < default_arguments.size(); i++) {
