@@ -838,4 +838,5 @@ WorkerThreadPool::WorkerThreadPool() {
 
 WorkerThreadPool::~WorkerThreadPool() {
 	finish();
+	singleton = nullptr;
 }

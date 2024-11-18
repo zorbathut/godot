@@ -461,8 +461,12 @@ protected:                                                                      
 	}                                                                                                                                       \
                                                                                                                                             \
 public:                                                                                                                                     \
-	static void initialize_class() {                                                                                                        \
+	static void initialize_class(bool deinit = false) {                                                                                     \
 		static bool initialized = false;                                                                                                    \
+		if (deinit) {                                                                                                                       \
+			initialized = false;                                                                                                            \
+			return;                                                                                                                         \
+		}                                                                                                                                   \
 		if (initialized) {                                                                                                                  \
 			return;                                                                                                                         \
 		}                                                                                                                                   \
@@ -782,7 +786,8 @@ protected:
 #endif
 
 public: // Should be protected, but bug in clang++.
-	static void initialize_class();
+	static void initialize_class(bool deinit = false);
+
 	_FORCE_INLINE_ static void register_custom_data_to_otdb() {}
 
 public:

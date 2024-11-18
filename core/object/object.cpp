@@ -1572,8 +1572,12 @@ Variant Object::_get_indexed_bind(const NodePath &p_name) const {
 	return get_indexed(p_name.get_as_property_path().get_subnames());
 }
 
-void Object::initialize_class() {
+void Object::initialize_class(bool deinit) {
 	static bool initialized = false;
+	if (deinit) {
+		initialized = false;
+		return;
+	}
 	if (initialized) {
 		return;
 	}
@@ -2370,7 +2374,12 @@ void ObjectDB::remove_instance(Object *p_object) {
 }
 
 void ObjectDB::setup() {
-	//nothing to do now
+	spin_lock.lock();
+	slot_count = 0;
+	slot_max = 0;
+	object_slots = nullptr;
+	validator_counter = 0;
+	spin_lock.unlock();
 }
 
 void ObjectDB::cleanup() {
@@ -2411,7 +2420,10 @@ void ObjectDB::cleanup() {
 
 	if (object_slots) {
 		memfree(object_slots);
+		object_slots = nullptr;
 	}
-
+	slot_count = 0;
+	slot_max = 0;
+	validator_counter = 0;
 	spin_lock.unlock();
 }
