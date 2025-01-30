@@ -2749,14 +2749,10 @@ Error RenderingDeviceDriverVulkan::command_queue_execute_and_present(CommandQueu
 		// it'll lead to very low performance in Android by entering an endless loop where it'll always resize the swap chain
 		// every frame.
 
-<<<<<<< HEAD
 		ERR_FAIL_COND_V_MSG(
 				err != VK_SUCCESS && err != VK_SUBOPTIMAL_KHR,
 				FAILED,
 				"QueuePresentKHR failed with error: " + get_vulkan_result(err));
-=======
-		ERR_FAIL_COND_V_MSG(err != VK_SUCCESS && err != VK_SUBOPTIMAL_KHR, FAILED, string_VkResult(err));
->>>>>>> c273971785 (Implement extended logging)
 	}
 
 	return OK;
