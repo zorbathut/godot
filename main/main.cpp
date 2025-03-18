@@ -984,7 +984,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	String project_path = ".";
 	bool upwards = false;
 	String debug_uri = "";
-#if defined(TOOLS_ENABLED) && defined(WINDOWS_ENABLED)
+#if defined(TOOLS_ENABLED) && (defined(WINDOWS_ENABLED) || defined(LINUXBSD_ENABLED))
 	bool test_rd_creation = false;
 	bool test_rd_support = false;
 #endif
@@ -1676,7 +1676,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 		} else if (arg == "--debug-stringnames") {
 			StringName::set_debug_stringnames(true);
 #endif
-#if defined(TOOLS_ENABLED) && defined(WINDOWS_ENABLED)
+#if defined(TOOLS_ENABLED) && (defined(WINDOWS_ENABLED) || defined(LINUXBSD_ENABLED))
 		} else if (arg == "--test-rd-support") {
 			test_rd_support = true;
 		} else if (arg == "--test-rd-creation") {
@@ -1885,12 +1885,12 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 #endif
 	}
 
-#if defined(TOOLS_ENABLED) && defined(WINDOWS_ENABLED)
+#if defined(TOOLS_ENABLED) && (defined(WINDOWS_ENABLED) || defined(LINUXBSD_ENABLED))
 	if (test_rd_support) {
 		// Test Rendering Device creation and exit.
 
 		OS::get_singleton()->set_crash_handler_silent();
-		if (OS::get_singleton()->_test_create_rendering_device()) {
+		if (OS::get_singleton()->_test_create_rendering_device(display_driver)) {
 			exit_err = ERR_HELP;
 		} else {
 			exit_err = ERR_UNAVAILABLE;
@@ -1900,7 +1900,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 		// Test OpenGL context and Rendering Device simultaneous creation and exit.
 
 		OS::get_singleton()->set_crash_handler_silent();
-		if (OS::get_singleton()->_test_create_rendering_device_and_gl()) {
+		if (OS::get_singleton()->_test_create_rendering_device_and_gl(display_driver)) {
 			exit_err = ERR_HELP;
 		} else {
 			exit_err = ERR_UNAVAILABLE;
@@ -4124,6 +4124,7 @@ int Main::start() {
 		if (editor) {
 			OS::get_singleton()->benchmark_begin_measure("Startup", "Editor");
 
+			sml->get_root()->set_translation_domain("godot.editor");
 			if (editor_pseudolocalization) {
 				translation_server->get_editor_domain()->set_pseudolocalization_enabled(true);
 			}
@@ -4321,6 +4322,7 @@ int Main::start() {
 			OS::get_singleton()->benchmark_begin_measure("Startup", "Project Manager");
 			Engine::get_singleton()->set_editor_hint(true);
 
+			sml->get_root()->set_translation_domain("godot.editor");
 			if (editor_pseudolocalization) {
 				translation_server->get_editor_domain()->set_pseudolocalization_enabled(true);
 			}
