@@ -30,8 +30,10 @@
 
 #include "rendering_native_surface_windows.h"
 
+#include "rendering_context_driver_vulkan_windows.h"
+
+#include "core/os/memory.h"
 #include "drivers/d3d12/rendering_context_driver_d3d12.h"
-#include "drivers/vulkan/rendering_context_driver_vulkan.h"
 
 void RenderingNativeSurfaceWindows::_bind_methods() {
 	ClassDB::bind_static_method("RenderingNativeSurfaceWindows", D_METHOD("create", "hwnd", "instance"), &RenderingNativeSurfaceWindows::create_api);
