@@ -59,6 +59,9 @@
 #include <windows.h>
 #include <windowsx.h>
 
+// the Windows headers pollute the global namespace with macros that conflict with our code, so we undefine them here (and in other places)
+#undef MemoryBarrier
+
 #ifdef DEBUG_ENABLED
 // forward error messages to OutputDebugString
 #define WINDOWS_DEBUG_OUTPUT_ENABLED
