@@ -34,6 +34,12 @@
 #include "core/templates/hash_map.h"
 #include "core/templates/paged_allocator.h"
 #include "core/templates/self_list.h"
+
+#if defined(MemoryBarrier)
+// Annoying define from winnt.h. Introduced by some of the headers above, and causes problems in rendering_device_driver.h
+#undef MemoryBarrier
+#endif
+
 #include "servers/rendering/rendering_device_driver.h"
 
 #ifndef _MSC_VER
