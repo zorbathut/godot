@@ -251,6 +251,10 @@ typedef UINT32 PEN_MASK;
 #define GET_POINTERID_WPARAM(wParam) (LOWORD(wParam))
 #endif
 
+#ifdef MemoryBarrier
+#undef MemoryBarrier
+#endif
+
 #if WINVER < 0x0602
 enum tagPOINTER_INPUT_TYPE {
 	PT_POINTER = 0x00000001,
