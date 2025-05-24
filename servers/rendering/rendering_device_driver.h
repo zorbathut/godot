@@ -361,9 +361,6 @@ public:
 		BARRIER_ACCESS_STORAGE_CLEAR_BIT = (1 << 27),
 	};
 
-	#ifdef MemoryBarrier
-	#error no stop
-	#endif
 	struct MemoryBarrier {
 		BitField<BarrierAccessBits> src_access;
 		BitField<BarrierAccessBits> dst_access;
