@@ -37,6 +37,7 @@
 #define MINGW_STDTHREAD_REDUNDANCY_WARNING
 #include "thirdparty/mingw-std-threads/mingw.mutex.h"
 #define THREADING_NAMESPACE mingw_stdthread
+#undef MemoryBarrier	// pollutes the global define-space otherwise
 #else
 #include <mutex>
 #define THREADING_NAMESPACE std
