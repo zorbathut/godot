@@ -10,6 +10,7 @@ import os
 import pickle
 import sys
 from collections import OrderedDict
+from importlib.abc import MetaPathFinder
 from importlib.util import module_from_spec, spec_from_file_location
 from types import ModuleType
 
@@ -236,6 +237,7 @@ opts.Add(BoolVariable("engine_update_check", "Enable engine update checks in the
 opts.Add(BoolVariable("steamapi", "Enable minimal SteamAPI integration for usage time tracking (editor only)", False))
 opts.Add("cache_path", "Path to a directory where SCons cache files will be stored. No value disables the cache.", "")
 opts.Add("cache_limit", "Max size (in GiB) for the SCons cache. 0 means no limit.", "0")
+opts.Add("variant_dir", "String tag to store intermediate files in for isolating builds", "default")
 
 # Thirdparty libraries
 opts.Add(BoolVariable("builtin_brotli", "Use the built-in Brotli library", True))
@@ -294,6 +296,9 @@ if env["import_env_vars"]:
     for env_var in str(env["import_env_vars"]).split(","):
         if env_var in os.environ:
             env["ENV"][env_var] = os.environ[env_var]
+
+# Rig up the variant dir system.
+env.VariantDir(f"build/{env['variant_dir']}", ".", duplicate=0)
 
 # Platform selection: validate input, and add options.
 
