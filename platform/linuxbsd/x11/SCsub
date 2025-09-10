@@ -37,9 +37,4 @@ if env["opengl3"]:
         ]
     )
 
-objects = []
-
-for source_file in source_files:
-    objects.append(env.Object(source_file))
-
-Return("objects")
+Return("source_files")
