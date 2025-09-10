@@ -8,7 +8,6 @@ base = "#platform/linuxbsd/x11/"
 source_files = [
     base + "display_server_x11.cpp",
     base + "key_mapping_x11.cpp",
-    base + "rendering_native_surface_x11.cpp",
 ]
 
 if env["use_sowrap"]:
