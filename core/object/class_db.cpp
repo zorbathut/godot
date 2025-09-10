@@ -840,7 +840,7 @@ use_script:
 	return scr.is_valid() && scr->is_valid() && scr->is_abstract();
 }
 
-void ClassDB::_add_class2(const StringName &p_class, const StringName &p_inherits, void (*p_deinit_func)(bool deinit)) {
+void ClassDB::_add_class(const StringName &p_class, const StringName &p_inherits, void (*p_deinit_func)(bool deinit)) {
 	Locker::Lock lock(Locker::STATE_WRITE);
 
 	const StringName &name = p_class;
