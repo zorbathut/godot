@@ -1029,6 +1029,11 @@ EditorDockManager::EditorDockManager() {
 ////////////////////////////////////////////////
 ////////////////////////////////////////////////
 
+EditorDockManager::~EditorDockManager() {
+	ERR_FAIL_COND(singleton != this);
+	singleton = nullptr;
+}
+
 void DockContextPopup::_notification(int p_what) {
 	switch (p_what) {
 		case Control::NOTIFICATION_LAYOUT_DIRECTION_CHANGED:

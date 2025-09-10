@@ -205,6 +205,15 @@ opts.Add(BoolVariable("sdl", "Enable the SDL3 input driver", True))
 
 # Advanced options
 opts.Add(
+    EnumVariable(
+        "library_type",
+        "Build library type",
+        "executable",
+        # static_library currently disabled; add this back in later
+        ("executable", "shared_library"),
+    )
+)
+opts.Add(
     BoolVariable(
         "dev_mode", "Alias for dev options: verbose=yes warnings=extra werror=yes tests=yes strict_checks=yes", False
     )
@@ -329,6 +338,15 @@ if env["import_env_vars"]:
             env["ENV"][env_var] = os.environ[env_var]
 
 # Platform selection: validate input, and add options.
+
+if env["library_type"] == "static_library":
+    env.Append(CPPDEFINES=["LIBGODOT_ENABLED"])
+elif env["library_type"] == "shared_library":
+    env.Append(CPPDEFINES=["LIBGODOT_ENABLED"])
+    env.Append(CCFLAGS=["-fPIC"])
+    env.Append(STATIC_AND_SHARED_OBJECTS_ARE_THE_SAME=True)
+else:
+    env.__class__.add_program = methods.add_program
 
 if not env["platform"]:
     # Missing `platform` argument, try to detect platform automatically
