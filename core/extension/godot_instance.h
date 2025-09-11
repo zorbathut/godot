@@ -56,20 +56,6 @@ public:
 	virtual ~GodotInstanceCallbacks() {}
 };
 
-class TaskExecutor {
-	InvokeCallbackFunction async_func;
-	ExecutorData async_data;
-	InvokeCallbackFunction sync_func;
-	ExecutorData sync_data;
-
-public:
-	TaskExecutor(InvokeCallbackFunction p_async_func, ExecutorData p_async_data, InvokeCallbackFunction p_sync_func, ExecutorData p_sync_data);
-	void sync(std::function<void()> p_callback);
-	void async(std::function<void()> p_callback);
-
-	static void invokeCallback(void *p_callback);
-};
-
 class GodotInstance : public Object {
 	GDCLASS(GodotInstance, Object);
 
@@ -78,7 +64,6 @@ class GodotInstance : public Object {
 	bool started = false;
 
 	GodotInstanceCallbacks *callbacks = nullptr;
-	TaskExecutor *executor = nullptr;
 
 public:
 	GodotInstance();
@@ -95,10 +80,6 @@ public:
 	void focus_in();
 	void pause();
 	void resume();
-
-	void set_executor(TaskExecutor *p_executor);
-	TaskExecutor *get_executor();
-	void execute(Callable p_callback, bool p_async);
 };
 
 #endif // GODOT_INSTANCE_H
