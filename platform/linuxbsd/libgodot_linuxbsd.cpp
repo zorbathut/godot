@@ -39,7 +39,7 @@ static OS_LinuxBSD *os = nullptr;
 
 static GodotInstance *instance = nullptr;
 
-GDExtensionObjectPtr libgodot_create_godot_instance(int p_argc, char *p_argv[], GDExtensionInitializationFunction p_init_func, InvokeCallbackFunction p_async_func, InvokeCallbackFunction p_sync_func) {
+GDExtensionObjectPtr libgodot_create_godot_instance(int p_argc, char *p_argv[], GDExtensionInitializationFunction p_init_func, LibGodotExtensionParameter *p_params) {
 	ERR_FAIL_COND_V_MSG(instance != nullptr, nullptr, "Only one Godot Instance may be created.");
 
 	os = new OS_LinuxBSD();
