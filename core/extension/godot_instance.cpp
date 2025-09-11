@@ -51,32 +51,23 @@ GodotInstance::GodotInstance() {
 GodotInstance::~GodotInstance() {
 }
 
-bool GodotInstance::initialize(GDExtensionInitializationFunction p_init_func, GodotInstanceCallbacks *p_callbacks) {
+bool GodotInstance::initialize(GDExtensionInitializationFunction p_init_func) {
 	GODOT_INSTANCE_LOG("Godot Instance initialization");
-	callbacks = p_callbacks;
 	GDExtensionManager *gdextension_manager = GDExtensionManager::get_singleton();
 	GDExtensionConstPtr<const GDExtensionInitializationFunction> ptr((const GDExtensionInitializationFunction *)&p_init_func);
 	GDExtensionManager::LoadStatus status = gdextension_manager->load_function_extension("libgodot://main", ptr);
 	return status == GDExtensionManager::LoadStatus::LOAD_STATUS_OK;
 }
 
-#define CALL_CB(cb)          \
-	if (callbacks) {         \
-		callbacks->cb(this); \
-	}
-
 bool GodotInstance::start() {
 	GODOT_INSTANCE_LOG("GodotInstance::start()");
-	CALL_CB(before_setup2);
 	Error err = Main::setup2();
 	if (err != OK) {
 		return false;
 	}
-	CALL_CB(before_start);
 	started = Main::start() == EXIT_SUCCESS;
 	if (started) {
 		OS::get_singleton()->get_main_loop()->initialize();
-		CALL_CB(after_start);
 	}
 	return started;
 }
@@ -104,8 +95,6 @@ void GodotInstance::focus_out() {
 		if (OS::get_singleton()->get_main_loop()) {
 			OS::get_singleton()->get_main_loop()->notification(MainLoop::NOTIFICATION_APPLICATION_FOCUS_OUT);
 		}
-
-		callbacks->focus_out(this);
 	}
 }
 
@@ -115,7 +104,6 @@ void GodotInstance::focus_in() {
 		if (OS::get_singleton()->get_main_loop()) {
 			OS::get_singleton()->get_main_loop()->notification(MainLoop::NOTIFICATION_APPLICATION_FOCUS_IN);
 		}
-		callbacks->focus_in(this);
 	}
 }
 
@@ -125,14 +113,12 @@ void GodotInstance::pause() {
 		if (OS::get_singleton()->get_main_loop()) {
 			OS::get_singleton()->get_main_loop()->notification(MainLoop::NOTIFICATION_APPLICATION_PAUSED);
 		}
-		callbacks->pause(this);
 	}
 }
 
 void GodotInstance::resume() {
 	GODOT_INSTANCE_LOG("GodotInstance::resume()");
 	if (started) {
-		callbacks->resume(this);
 		if (OS::get_singleton()->get_main_loop()) {
 			OS::get_singleton()->get_main_loop()->notification(MainLoop::NOTIFICATION_APPLICATION_RESUMED);
 		}

@@ -42,20 +42,6 @@ typedef void *ExecutorData;
 typedef void (*InvokeCallback)(CallbackData p_data);
 typedef void (*InvokeCallbackFunction)(InvokeCallback p_callback, CallbackData p_callback_data, ExecutorData p_executor_data);
 
-class GodotInstance;
-class GodotInstanceCallbacks {
-public:
-	virtual void before_setup2(GodotInstance *p_instance) {}
-	virtual void before_start(GodotInstance *p_instance) {}
-	virtual void after_start(GodotInstance *p_instance) {}
-	virtual void focus_out(GodotInstance *p_instance) {}
-	virtual void focus_in(GodotInstance *p_instance) {}
-	virtual void pause(GodotInstance *p_instance) {}
-	virtual void resume(GodotInstance *p_instance) {}
-
-	virtual ~GodotInstanceCallbacks() {}
-};
-
 class GodotInstance : public Object {
 	GDCLASS(GodotInstance, Object);
 
@@ -63,13 +49,11 @@ class GodotInstance : public Object {
 
 	bool started = false;
 
-	GodotInstanceCallbacks *callbacks = nullptr;
-
 public:
 	GodotInstance();
 	~GodotInstance();
 
-	bool initialize(GDExtensionInitializationFunction p_init_func, GodotInstanceCallbacks *p_callbacks = nullptr);
+	bool initialize(GDExtensionInitializationFunction p_init_func);
 
 	bool start();
 	bool is_started();
