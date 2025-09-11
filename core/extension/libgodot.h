@@ -45,9 +45,8 @@ extern "C" {
 #endif
 
 typedef void *CallbackData;
-typedef void *ExecutorData;
 typedef void (*InvokeCallback)(CallbackData p_data);
-typedef void (*InvokeCallbackFunction)(InvokeCallback p_callback, CallbackData p_callback_data, ExecutorData p_executor_data);
+typedef void (*InvokeCallbackFunction)(InvokeCallback p_callback, CallbackData p_callback_data);
 
 /**
  * @name libgodot_create_godot_instance
@@ -61,7 +60,7 @@ typedef void (*InvokeCallbackFunction)(InvokeCallback p_callback, CallbackData p
  *
  * @return A pointer to created \ref GodotInstance GDExtension object or nullptr if there was an error.
  */
-LIBGODOT_API GDExtensionObjectPtr libgodot_create_godot_instance(int p_argc, char *p_argv[], GDExtensionInitializationFunction p_init_func, InvokeCallbackFunction p_async_func, ExecutorData p_async_data, InvokeCallbackFunction p_sync_func, ExecutorData p_sync_data);
+LIBGODOT_API GDExtensionObjectPtr libgodot_create_godot_instance(int p_argc, char *p_argv[], GDExtensionInitializationFunction p_init_func, InvokeCallbackFunction p_async_func, InvokeCallbackFunction p_sync_func);
 
 /**
  * @name libgodot_destroy_godot_instance

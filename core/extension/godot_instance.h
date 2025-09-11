@@ -37,11 +37,6 @@
 
 #include <functional>
 
-typedef void *CallbackData;
-typedef void *ExecutorData;
-typedef void (*InvokeCallback)(CallbackData p_data);
-typedef void (*InvokeCallbackFunction)(InvokeCallback p_callback, CallbackData p_callback_data, ExecutorData p_executor_data);
-
 class GodotInstance : public Object {
 	GDCLASS(GodotInstance, Object);
 
