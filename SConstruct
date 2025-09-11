@@ -360,14 +360,13 @@ if not env["platform"]:
 # Allow for shared libraries.
 if env["library_type"] == "shared_library":
     if env["platform"] == "linuxbsd" or env["platform"] == "windows":
+        # currently needed to ensure that modules get built properly
         env.Append(CCFLAGS=["-fPIC"])
-        env.Append(STATIC_AND_SHARED_OBJECTS_ARE_THE_SAME=True)
     else:
         print_error(f"Shared library build not yet supported for {env["platform"]}")
         Exit(255)
 else:
     env.__class__.add_program = methods.add_program
-
 
 # Deprecated aliases kept for compatibility.
 if env["platform"] in compatibility_platform_aliases:
