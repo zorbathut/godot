@@ -42,6 +42,14 @@
 #undef CRASH_HANDLER_ENABLED
 #endif
 
+// Two reasons for this:
+// * It's kind of weird that a library is taking over your crash signals without permission
+// * It's deeply incompatible with .NET, which requires those signals to properly function
+// This could maybe be detected at runtime.
+#ifdef LIBGODOT_ENABLED
+#undef CRASH_HANDLER_ENABLED
+#endif
+
 #ifdef CRASH_HANDLER_ENABLED
 #include <cxxabi.h>
 #include <dlfcn.h>
