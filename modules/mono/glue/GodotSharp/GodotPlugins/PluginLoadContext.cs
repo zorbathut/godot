@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
 
@@ -47,6 +48,17 @@ namespace GodotPlugins
         {
             if (assemblyName.Name == null)
                 return null;
+
+            // Check if an assembly with this name is already loaded in the AppDomain
+            // This prevents double-loading when a LibGodot runner links to the game DLL
+            Assembly? existingAssembly = AppDomain.CurrentDomain.GetAssemblies()
+                .FirstOrDefault(a => string.Equals(a.GetName().Name, assemblyName.Name, StringComparison.OrdinalIgnoreCase));
+
+            if (existingAssembly != null)
+            {
+                // Return the existing assembly to avoid double-loading
+                return existingAssembly;
+            }
 
             if (_sharedAssemblies.Contains(assemblyName.Name))
                 return _mainLoadContext.LoadFromAssemblyName(assemblyName);
