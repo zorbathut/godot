@@ -77,6 +77,7 @@ def get_flags():
     return {
         "arch": "wasm32",
         "target": "template_debug",
+        "supported": ["library", "mono"],
         "builtin_pcre2_with_jit": False,
         "vulkan": False,
         # Embree is heavy and requires too much memory (GH-70621).
