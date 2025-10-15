@@ -179,6 +179,13 @@ namespace GodotTools.Export
             if (!TryDeterminePlatformFromOSName(osName, out string? platform))
                 throw new NotSupportedException("Target platform not supported.");
 
+            // For web, we'll skip the .NET publish step as web export uses a different C# runtime approach
+            if (platform == OS.Platforms.Web)
+            {
+                // TODO: Implement proper C# web export with .NET WASM runtime
+                return;
+            }
+
             if (!new[] { OS.Platforms.Windows, OS.Platforms.LinuxBSD, OS.Platforms.MacOS, OS.Platforms.Android, OS.Platforms.iOS }
                     .Contains(platform))
             {
