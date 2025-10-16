@@ -639,8 +639,10 @@ def add_static_library_with_libs(env, name, sources, **args):
     # First build the base library from our sources
     base_lib = add_library(env, name, sources, **args)
 
-    # If we have archives to merge, add a post-action to merge them using ar -M (MRI script)
+    # If we have archives to merge, add dependencies and a post-action to merge them using ar -M (MRI script)
     if lib_archives:
+        # Add explicit dependencies so SCons builds all the libraries before merging
+        env.Depends(base_lib, lib_archives)
         def merge_static_libs_action(target, source, env):
             import subprocess
             import tempfile
