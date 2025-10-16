@@ -113,7 +113,7 @@ def configure(env: "SConsEnvironment"):
     cc_semver = (cc_version["major"], cc_version["minor"], cc_version["patch"])
 
     # Minimum emscripten requirements.
-    if cc_semver < (4, 0, 0):
+    if cc_semver < (4, 0, 0) and cc_semver != (3, 1, 56):
         print_error("The minimum Emscripten version to build Godot is 4.0.0, detected: %s.%s.%s" % cc_semver)
         sys.exit(255)
 
