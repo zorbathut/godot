@@ -602,6 +602,98 @@ def add_program(env, name, sources, **args):
     return program
 
 
+def add_static_library_with_libs(env, name, sources, **args):
+    """
+    Build a static library that includes all dependent libraries from LIBS.
+
+    Unlike executables/shared libraries (which use a linker that processes LIBS),
+    static libraries use 'ar' which only archives the specific object files passed to it.
+    This function uses ar's MRI script feature to merge all dependent .a libraries
+    into the final static library.
+    """
+
+    def flatten_libs(libs):
+        """Recursively flatten a nested list structure, including NodeLists"""
+        result = []
+        for item in libs:
+            # Check if it's a list-like object (list, tuple, or SCons NodeList)
+            if hasattr(item, '__iter__') and not isinstance(item, str):
+                result.extend(flatten_libs(item))
+            else:
+                result.append(item)
+        return result
+
+    # Flatten and filter LIBS to only include actual library archives
+    raw_libs = env.get("LIBS", [])
+    libs = flatten_libs(raw_libs)
+
+    lib_archives = []
+    for lib in libs:
+        lib_str = str(lib)
+        # Include .a files (Linux/Mac/Emscripten) and .lib files (Windows static libs)
+        if lib_str.endswith('.a') or (lib_str.endswith('.lib') and not lib_str.endswith('.so')):
+            lib_archives.append(lib)
+
+    print(f"Building static library {name} with {len(sources)} sources + {len(lib_archives)} dependent .a libraries")
+
+    # First build the base library from our sources
+    base_lib = add_library(env, name, sources, **args)
+
+    # If we have archives to merge, add a post-action to merge them using ar -M (MRI script)
+    if lib_archives:
+        def merge_static_libs_action(target, source, env):
+            import subprocess
+            import tempfile
+            import os
+
+            target_path = str(target[0])
+
+            # Create MRI script to merge all archives
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.mri', delete=False) as mri:
+                mri.write(f"CREATE {target_path}.merged\n")
+                mri.write(f"ADDLIB {target_path}\n")
+
+                for archive in lib_archives:
+                    archive_path = str(archive)
+                    mri.write(f"ADDLIB {archive_path}\n")
+
+                mri.write("SAVE\n")
+                mri.write("END\n")
+                mri_path = mri.name
+
+            try:
+                # Run ar with MRI script
+                ar_cmd = env.subst("$AR")
+                with open(mri_path, 'r') as mri_file:
+                    result = subprocess.run(
+                        [ar_cmd, "-M"],
+                        stdin=mri_file,
+                        capture_output=True,
+                        text=True
+                    )
+
+                if result.returncode != 0:
+                    print_error(f"ar merge failed: {result.stderr}")
+                    return result.returncode
+
+                # Replace original with merged
+                os.replace(f"{target_path}.merged", target_path)
+
+                # Update the archive index
+                ranlib_cmd = env.subst("$RANLIB")
+                subprocess.run([ranlib_cmd, target_path], check=True)
+
+                print(f"Successfully merged {len(lib_archives)} archives into {target_path}")
+                return 0
+            finally:
+                if os.path.exists(mri_path):
+                    os.remove(mri_path)
+
+        env.AddPostAction(base_lib, env.Run(merge_static_libs_action))
+
+    return base_lib
+
+
 def CommandNoCache(env, target, sources, command, **args):
     result = env.Command(target, sources, command, **args)
     env.NoCache(result)
