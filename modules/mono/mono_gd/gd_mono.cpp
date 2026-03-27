@@ -651,6 +651,14 @@ static bool _on_core_api_assembly_loaded() {
 void GDMono::initialize() {
 	print_verbose(".NET: Initializing module...");
 
+#ifdef WEB_ENABLED
+	// On web, the .NET runtime is managed externally by the host application
+	// (e.g., .NET WASM runtime loaded via JavaScript). Godot's internal mono
+	// module cannot load hostfxr/coreclr in WASM, so skip initialization.
+	print_verbose(".NET: Skipping internal runtime initialization on web platform.");
+	return;
+#endif
+
 	_init_godot_api_hashes();
 
 	godot_plugins_initialize_fn godot_plugins_initialize = nullptr;
